@@ -10,6 +10,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
+	"strings"
 
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
@@ -17,7 +19,7 @@ import (
 
 const (
 	configsPath = "/etc/prometheus/filesd"
-	nameScheme  = "filesd_api_%x.json"
+	nameScheme  = "filesd_api_%s.json"
 )
 
 type FileSDConfig struct {
@@ -32,8 +34,8 @@ func (f *FileSDConfig) Hash() (string, error) {
 	}
 	h := sha1.New()
 	h.Write([]byte(content))
-	xd := h.Sum(nil)
-	return string(xd), nil
+	hash := h.Sum(nil)
+	return fmt.Sprintf("%x", hash), nil
 }
 
 // ToPrometheusString returns config usable by prometheus
@@ -51,14 +53,24 @@ func filePath(id string) string {
 	return fmt.Sprintf(fmt.Sprintf("%s/%s", configsPath, nameScheme), id)
 }
 
+func isValidHexadecimal(id string) bool {
+	for _, l := range strings.ToLower(id) {
+		if (l >= '0' && l <= '9') ||
+			(l >= 'a' && l <= 'f') {
+			continue
+		}
+		return false
+	}
+	return true
+}
+
 // CreateFilesd POST endpoint, which creates file in configs path
 // naming is based on specified scheme and on hash of input data
-
-func CreateFilesd(w http.ResponseWriter, req *http.Request) {
+func CreateFilesd(w http.ResponseWriter, r *http.Request) {
 	const endpointName = "CreateFileSDConfig"
 	log.WithField("endpoint", endpointName).Debug("Start")
 	var c FileSDConfig
-	err := json.NewDecoder(req.Body).Decode(&c)
+	err := json.NewDecoder(r.Body).Decode(&c)
 	if err != nil {
 		log.WithField("endpoint", endpointName).WithError(err).Error("body decode")
 		return
@@ -77,16 +89,33 @@ func CreateFilesd(w http.ResponseWriter, req *http.Request) {
 		log.WithField("endpoint", endpointName).WithError(err).Error("hash calc")
 		return
 	}
-	err = ioutil.WriteFile(filePath(id), confBytes, 0755)
+	err = ioutil.WriteFile(filePath(id), confBytes, 0644)
 	if err != nil {
 		log.WithField("endpoint", endpointName).WithError(err).Error("write to file")
 		return
 	}
+	w.WriteHeader(http.StatusOK)
 	log.WithField("endpoint", endpointName).Debug("Done")
 }
 
-func DeleteFilesd(w http.ResponseWriter, req *http.Request) {
-
+func DeleteFilesd(w http.ResponseWriter, r *http.Request) {
+	const endpointName = "DeleteFileSDConfig"
+	vars := mux.Vars(r)
+	fileID := vars["id"]
+	log.Info(fileID)
+	if !isValidHexadecimal(fileID) {
+		log.WithField("endpoint", endpointName).Error("invalid hexadecimal")
+		return
+	}
+	path := filePath(fileID)
+	log.WithField("endpoint", endpointName).Debug("removing:" + path)
+	err := os.Remove(path)
+	if err != nil {
+		log.WithField("endpoint", endpointName).WithError(err).Debug("cannot remove")
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	log.WithField("endpoint", endpointName).Debug("Done")
 }
 
 func init() {
