@@ -98,11 +98,11 @@ func CreateFilesd(w http.ResponseWriter, r *http.Request) {
 	log.WithField("endpoint", endpointName).Debug("Done")
 }
 
+// DeleteFilesd endpoint deletes file with specific ID in configs path
 func DeleteFilesd(w http.ResponseWriter, r *http.Request) {
 	const endpointName = "DeleteFileSDConfig"
 	vars := mux.Vars(r)
 	fileID := vars["id"]
-	log.Info(fileID)
 	if !isValidHexadecimal(fileID) {
 		log.WithField("endpoint", endpointName).Error("invalid hexadecimal")
 		return
@@ -129,6 +129,6 @@ func main() {
 
 	router := mux.NewRouter()
 	router.HandleFunc("/filesd", CreateFilesd).Methods("POST")
-	router.HandleFunc("/filesd/{id}", DeleteFilesd).Methods("DELETE")
+	router.HandleFunc("/filesd/{id:[0-9a-fA-F]{40}}", DeleteFilesd).Methods("DELETE")
 	log.Fatal(http.ListenAndServe(":"+PORT, router))
 }
