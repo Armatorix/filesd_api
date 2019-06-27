@@ -1,5 +1,5 @@
 import React from 'react';
-import { Badge, Table, Navbar, Nav, Form } from 'react-bootstrap'
+import { Container, Row, Badge, Table, Navbar, Nav } from 'react-bootstrap'
 import './App.css';
 
 var configs = [
@@ -24,13 +24,12 @@ function App() {
         </Badge>)
     }
     var labels = [];
-    Object.keys(configs[i].labels).map((k, idx) => {
+    for (var k in configs[i].labels) {
       labels.push(
         <Badge pill variant="secondary">
           {k} = {configs[i].labels[k]}
         </Badge>)
-    })
-    var lables = [];
+    }
     rows.push(
       <tr>
         <td> {i} </td>
@@ -50,18 +49,22 @@ function App() {
           </Nav>
         </Navbar.Collapse>
       </Navbar>
-      <Table striped bordered hover>
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Targets</th>
-            <th>Labels</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows}
-        </tbody>
-      </Table>
+      <Container>
+        <Row>
+          <Table striped bordered hover>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Targets</th>
+                <th>Labels</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows}
+            </tbody>
+          </Table>
+        </Row>
+      </Container>
     </div>
   );
 }
