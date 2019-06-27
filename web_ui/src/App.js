@@ -1,8 +1,9 @@
 import React from 'react';
-import { Container, Row, Badge, Table, Navbar, Nav } from 'react-bootstrap'
+import { Button, Container, Row, Badge, Table, Navbar, Nav } from 'react-bootstrap'
 import './App.css';
-
+// TODO add multiple configs per config
 var configs = [
+  
   {
     targets: ["123.321.213.321:3213", "123.321.213.321:3213", "123.321.213.321:3213", "123.321.213.321:3213"],
     labels: { "1": "1lab", "2": "2lab" },
@@ -35,6 +36,10 @@ function App() {
         <td> {i} </td>
         <td> {targets} </td>
         <td> {labels} </td>
+        <td> 
+          <Button variant="danger"> Delete </Button>
+          <Button variant="warning"> Edit </Button>
+          </td>
       </tr>)
   }
   return (
@@ -57,6 +62,7 @@ function App() {
                 <th>#</th>
                 <th>Targets</th>
                 <th>Labels</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
