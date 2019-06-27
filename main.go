@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -23,8 +24,8 @@ const (
 )
 
 type FileSDConfig struct {
-	Targets []string `json:targets"`
-	Labels  map[string]string
+	Targets []string          `json:"targets"`
+	Labels  map[string]string `json:"labels"`
 }
 
 func (f *FileSDConfig) Hash() (string, error) {
@@ -41,9 +42,7 @@ func (f *FileSDConfig) Hash() (string, error) {
 // ToPrometheusString returns config usable by prometheus
 func (f *FileSDConfig) ToPrometheusString() ([]byte, error) {
 	return json.Marshal([]FileSDConfig{*f})
-
 }
-
 func configsLen() (int, error) {
 	files, err := ioutil.ReadDir(configsPath)
 	return len(files), err
@@ -62,6 +61,41 @@ func isValidHexadecimal(id string) bool {
 		return false
 	}
 	return true
+}
+
+// GetFilesds lists all scrape configs configs
+func GetFilesds(w http.ResponseWriter, r *http.Request) {
+	var configs []FileSDConfig
+	const endpointName = "GetFileSDConfig"
+	log.WithField("endpoint", endpointName).Debug("Start")
+	err := filepath.Walk(configsPath, func(path string, info os.FileInfo, err error) error {
+		if info.IsDir() {
+			return nil
+		}
+		c := []FileSDConfig{}
+		file, err := os.Open(path)
+		if err != nil {
+			log.WithField("endpoint", endpointName).WithError(err).Error("file read")
+			return err
+		}
+		err = json.NewDecoder(file).Decode(&c)
+		if err != nil {
+			log.WithField("endpoint", endpointName).WithError(err).Error("body decode")
+			return err
+		}
+		configs = append(configs, c...)
+		return nil
+	})
+	if err != nil {
+		log.WithField("endpoint", endpointName).WithError(err).Error("file walk")
+		return
+	}
+	resp, err := json.Marshal(&configs)
+	if err != nil {
+		log.WithField("endpoint", endpointName).WithError(err).Error("configs stringify")
+	}
+	w.Write(resp)
+	log.WithField("endpoint", endpointName).Debug("Done")
 }
 
 // CreateFilesd POST endpoint, which creates file in configs path
@@ -129,6 +163,7 @@ func main() {
 
 	router := mux.NewRouter()
 	router.HandleFunc("/filesd", CreateFilesd).Methods("POST")
+	router.HandleFunc("/filesd", GetFilesds).Methods("GET")
 	router.HandleFunc("/filesd/{id:[0-9a-fA-F]{40}}", DeleteFilesd).Methods("DELETE")
 	log.Fatal(http.ListenAndServe(":"+PORT, router))
 }
