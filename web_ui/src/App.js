@@ -3,45 +3,103 @@ import { Button, Container, Row, Badge, Table, Navbar, Nav } from 'react-bootstr
 import './App.css';
 // TODO add multiple configs per config
 var configs = [
-  
   {
-    targets: ["123.321.213.321:3213", "123.321.213.321:3213", "123.321.213.321:3213", "123.321.213.321:3213"],
-    labels: { "1": "1lab", "2": "2lab" },
+    id: "6bc661257fd81341d93fc741cf1999684baeacec",
+    configs: [
+      {
+        targets: ["123.321.213.321:3213", "123.321.213.321:3213", "123.321.213.321:3213", "123.321.213.321:3213"],
+        labels: { "1": "1lab", "2": "2lab" },
+      },
+      {
+        targets: ["123.321.213.321:3213", "123.321.213.321:3213", "123.321.213.321:3213", "123.321.213.321:3213"],
+        labels: { "1": "1lab", "2": "2lab" },
+      }
+    ]
   },
   {
-    targets: ["123.321.213.321:3213", "123.321.213.321:3213", "123.321.213.321:3213", "123.321.213.321:3213"],
-    labels: { "1": "1lab", "2": "2lab" },
+    id: "2137",
+    configs: [
+      {
+        targets: ["23.321.213.321:3213", "123.321.213.321:3213", "123.321.213.321:3213", "123.321.213.321:3213"],
+        labels: { "1": "1lab", "2": "2lab" },
+      },
+      {
+        targets: ["123.321.213.321:3213", "123.321.213.321:3213", "123.321.213.321:3213", "123.321.213.321:3213"],
+        labels: { "1": "1lab", "2": "2lab" },
+      },
+      {
+        targets: ["123.321.213.321:3213", "123.321.213.321:3213", "123.321.213.321:3213", "123.321.213.321:3213"],
+        labels: { "1": "1lab", "2": "2lab" },
+      }
+    ]
   }
 ]
 
-function App() {
+
+function buildSubTable(c) {
+  console.log(c)
   var rows = [];
-  for (var i = 0; i < configs.length; i++) {
+  // header with ID
+  rows.push(
+    <tr>
+      <td colSpan="4">
+        Config ID: {c.id}
+      </td>
+    </tr>)
+  for (var i = 0; i < c.configs.length; i++) {
     var targets = [];
-    for (var j = 0; j < configs[i].targets.length; j++) {
+    c.configs[i].targets.forEach((trgt)=> {
       targets.push(
         <Badge pill variant="primary">
-          {configs[i].targets[j]}
+          {trgt}
         </Badge>)
-    }
+    });
     var labels = [];
-    for (var k in configs[i].labels) {
+    console.log(c.configs)
+    for (var k in c.configs[i].labels) {
       labels.push(
         <Badge pill variant="secondary">
-          {k} = {configs[i].labels[k]}
+          {k} = {c.configs[i].labels[k]}
         </Badge>)
     }
     rows.push(
       <tr>
-        <td> {i} </td>
+        <td> {i+1} </td>
         <td> {targets} </td>
         <td> {labels} </td>
-        <td> 
+        <td>
           <Button variant="danger"> Delete </Button>
           <Button variant="warning"> Edit </Button>
-          </td>
+        </td>
       </tr>)
   }
+  return rows;
+}
+
+function buildTable(c) {
+  var subTables = [];
+  c.forEach((conf) => {
+    console.log(conf);
+    subTables.push(buildSubTable(conf))
+  })
+  return <Table striped bordered hover>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Targets</th>
+        <th>Labels</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {subTables}
+    </tbody>
+  </Table>;
+}
+
+function App() {
+  var tab = buildTable(configs);
+
   return (
     <div className="App">
       <Navbar bg="light" expand="lg">
@@ -56,19 +114,7 @@ function App() {
       </Navbar>
       <Container>
         <Row>
-          <Table striped bordered hover>
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Targets</th>
-                <th>Labels</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows}
-            </tbody>
-          </Table>
+          {tab}
         </Row>
       </Container>
     </div>
