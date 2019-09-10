@@ -11,7 +11,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"strings"
 
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
@@ -55,17 +54,6 @@ func filePath(id string) string {
 	return fmt.Sprintf(fmt.Sprintf("%s/%s", configsPath, nameScheme), id)
 }
 
-func isValidHexadecimal(id string) bool {
-	for _, l := range strings.ToLower(id) {
-		if (l >= '0' && l <= '9') ||
-			(l >= 'a' && l <= 'f') {
-			continue
-		}
-		return false
-	}
-	return true
-}
-
 // CreateFilesd POST endpoint, which creates file in configs path
 // naming is based on specified scheme and on hash of input data
 func CreateFilesd(w http.ResponseWriter, r *http.Request) {
@@ -106,10 +94,7 @@ func DeleteFilesd(w http.ResponseWriter, r *http.Request) {
 	le := log.WithField("endpoint", "DeleteFileSDConfig")
 	vars := mux.Vars(r)
 	fileID := vars["id"]
-	if !isValidHexadecimal(fileID) {
-		le.Error("invalid hexadecimal")
-		return
-	}
+
 	path := filePath(fileID)
 	le.Debug("removing:" + path)
 	err := os.Remove(path)
